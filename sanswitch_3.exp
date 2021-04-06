@@ -1,0 +1,166 @@
+#!/usr/bin/expect -f
+
+set ipswitch "10.0.0.10"
+set switchname "IBM_2498_X24"
+set switchnametest "IBM_2498_X24"
+set prompt ":admin>"
+set prompt2 ":root>"
+set ports 23
+set portsflag 0
+
+#Login cumulus as admin
+spawn ssh -o StrictHostKeyChecking=no admin@$ipswitch
+expect "admin@$ipswitch's password: " { send -- "password\r" }
+expect "$prompt"
+
+send "defzone --noaccess\r"
+expect "No Access ?" { send -- "y\r" }
+sleep 1
+
+#######################################
+expect "$prompt" {send -- "cfgsave\r"}
+expect "Defined zoning configuration only?" { send -- "y\r" }
+sleep 1
+
+expect "$prompt" { send -- "cfgdisable\r" }
+sleep 1
+send "y\r"
+
+expect "$prompt" {send -- "cfgclear\r"}
+sleep 1
+send "y\r"
+
+expect "$prompt" {send -- "cfgsave\r"}
+sleep 1
+send "y\r"
+
+expect "$prompt" {send -- "cfgshow\r"}
+sleep 1
+
+expect "$prompt" {
+	send -- "cfgsave\r"
+	sleep 1
+	send "y\r"
+}
+sleep 1
+
+expect "$prompt" {send -- "cfgshow\r"}
+sleep 1
+
+expect "$prompt" {send -- "defzone \-\-allaccess\r"}
+sleep 1
+send "y\r"
+
+expect "$prompt" {send "switchenable\r"}
+
+#sesion admin finalizada
+expect "$prompt" {send "\exit\r"}
+expect "Connection to*closed."
+
+#Login cumulus as root
+spawn ssh -o StrictHostKeyChecking=no root@$ipswitch
+expect "root@$ipswitch's password: " { send -- "fibranne\r" }
+#expect "root@$ipswitch's password: " { send -- "password\r" }
+
+#Configuraciones como root
+expect "$prompt2" {send "switchdisable\r"}
+
+expect "$prompt2" {	send "\configremoveall\r"}
+expect "config database" {send "y\r"}
+expect "FAWWN database" {send "y\r"}
+expect "zone\/AD database" {send "y\r"}
+expect "security database(ACL policy)" {send "y\r"}
+expect "Flow Vision database" {send "y\r"}
+#expect "FC router database" {send "y\r"}
+
+#reinicio de switch
+expect "reboot the system" {send "y\r"}
+puts "reiniciando \switch..."
+sleep 145
+
+#Login cumulus as admin
+spawn ssh -o StrictHostKeyChecking=no admin@$ipswitch
+expect "admin@$ipswitch's password: " { send -- "password\r" }
+expect "$prompt"
+
+send "bannerset \"\"\r"
+sleep 1
+
+expect "$prompt" {send "switchname $switchnametest\r"}
+
+expect "$prompt" {send "chassisname $switchnametest\r"}
+
+expect "$prompt" {send "snmpconfig \-\-\set snmpv1\r"}
+expect "Secret C0de" {send "\r"}
+sleep 1
+send "\r"
+expect "OrigEquipMfr" {send "\r"}
+sleep 1
+send "\r"
+expect "private" {send "\r"}
+sleep 1
+send "\r"
+expect "public" {send "\r"}
+sleep 1
+send "\r"
+expect "common" {send "\r"}
+sleep 1
+send "\r"
+expect "FibreChannel" {send "\r"}
+sleep 1
+send "\r"
+
+expect "$prompt" {send "snmpconfig \-\-\set snmpv3\r"}
+expect "SNMP Informs Enabled" {send "\r"}
+expect "snmpadmin1" {send "\r"}
+sleep 1
+send "\r"
+sleep 1
+send "\r"
+expect "snmpadmin2" {send "\r"}
+sleep 1
+send "\r"
+sleep 1
+send "\r"
+expect "snmpadmin3" {send "\r"}
+sleep 1
+send "\r"
+sleep 1
+send "\r"
+expect "snmpuser1" {send "\r"}
+sleep 1
+send "\r"
+sleep 1
+send "\r"
+expect "snmpuser2" {send "\r"}
+sleep 1
+send "\r"
+sleep 1
+send "\r"
+expect "snmpuser3" {send "\r"}
+sleep 1
+send "\r"
+sleep 1
+send "\r"
+expect "SNMPv3 trap recipient configuration"
+sleep 1
+send "\r"
+sleep 1
+send "\r"
+sleep 1
+send "\r"
+sleep 1
+send "\r"
+sleep 1
+send "\r"
+sleep 1
+send "\r"
+
+expect "$prompt"
+#default configuration on ports
+while {$portsflag <= $ports } {
+	send "portcfgdefault $portsflag\r"
+	sleep 2
+	expect "$prompt"
+	incr portsflag
+}

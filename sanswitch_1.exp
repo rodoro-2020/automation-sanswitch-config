@@ -1,0 +1,28 @@
+#!/usr/bin/expect -f
+
+set ipswitch "10.0.0.10"
+set switchname "IBM_2498_F48"
+set switchnametest "IBM_2498_test_csc"
+set prompt ":admin>"
+set prompt2 ":root>"
+set ports 47
+set portsflag 0
+
+#Login cumulus as admin
+spawn ssh -o StrictHostKeyChecking=no admin@$ipswitch
+expect "admin@$ipswitch's password: " { send -- "password\r" }
+expect "$prompt"
+
+#fase1
+send "licenseshow\r"
+expect "$prompt"
+send "switchdisable\r"
+expect "$prompt"
+send "configdefault -all\r"
+sleep 6
+
+#reinicio de switch
+send "y\r"
+puts "reiniciando \switch..."
+sleep 145
+puts "primera etapa finalizada."
