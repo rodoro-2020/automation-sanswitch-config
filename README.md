@@ -40,4 +40,3 @@ set ports 23
 
 You may need to change it to the necessary parameters.
 
-Contact Alan.Flores1@ibm.com for support.
